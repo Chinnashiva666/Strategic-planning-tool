@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAWORTH - Square Meters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+      <style>
+
+/* Scrollbar styles */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+       
+ /* Animation for the department card */
+        @keyframes hoverAnimation {
+            0% {
+                transform: translateX(0);
+                background: #3e3f46;
+            }
+            50% {
+                transform: translateX(-10px);
+                background: var(--clr);
+            }
+            100% {
+                transform: translateX(0);
+                background: #3e3f46;
+            }
+        }
+
+        ul li {
+            list-style: none;
+            padding: 15px;
+            background: #3e3f46;
+            margin: 10px 0;
+            position: relative;
+            transition: transform 0.5s, background 0.5s;
+            animation: hoverAnimation 3s infinite ease-in-out;
+        }
+
+        ul li::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -40px;
+            width: 40px;
+            height: 100%;
+            background: #3e3f46;
+            filter: brightness(0.7);
+            transform-origin: right;
+            transform: skewY(45deg);
+            transition: background 0.5s;
+        }
+
+        ul li:hover::before {
+            background: var(--clr);
+        }
+
+        ul li a {
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Set different colors for each item dynamically */
+        ul li:nth-child(1) {
+            --clr: #FF5733;
+        }
+
+        ul li:nth-child(2) {
+            --clr: #33FF57;
+        }
+
+        ul li:nth-child(3) {
+            --clr: #3357FF;
+        }
+
+        ul li:nth-child(4) {
+            --clr: #F1C40F;
+        }
+
+        ul li:nth-child(5) {
+            --clr: #8E44AD;
+        }
+
+/* Left Panel styling */
+        .left-panel {
+            overflow-y: auto;
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Right Panel (Floor Levels) */
+        .right-panel {
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            background-color: #f7fafc;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-50 font-sans scroll-smooth">
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Left Panel -->
+        <div class="left-panel w-full md:w-1/2 p-8 md:p-16 bg-white shadow-lg rounded-lg">
+            <h1 class="text-3xl font-extrabold text-gray-800 uppercase tracking-widest mb-6">Haworth</h1>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Enter Square Meters for Each Floor</h3>
+            <p class="text-lg text-gray-600 mb-6 leading-relaxed">
+                Provide the square meter area for each floor to calculate the total.
+            </p>
+
+            <div id="floor-inputs" class="space-y-6 space-card card block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"></div>
+
+            <div id="total-sqm" class="space-y-6 mt-6 space-card card block p-6 dark:border-gray-700 border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 font-bold">
+                Total: 0 sqm
+            </div>
+
+            <!-- Next Button to navigate to the Space Planning page -->
+            <button id="next-btn" class="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Next</button>
+            <!-- Reset Button to clear the inputs -->
+            <button id="reset-btn" class="mt-3 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Reset</button>
+
+        </div>
+
+        <!-- Right Panel -->
+        <div class="w-full md:w-1/2 bg-gray-900 p-8 md:p-16">
+            <h3 class="text-2xl font-bold text-white mb-6"></h3>
+            <ul id="floor-summary" class="space-y-2"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Function to get number of floors from localStorage (if stored previously)
+        function getFloors() {
+            return parseInt(localStorage.getItem('floors'), 10) || 0; // Default to 0 if no data exists
+        }
+
+        // Function to create input fields dynamically based on the number of floors
+        function createInputFields() {
+            const numberOfFloors = getFloors();
+            const floorInputsDiv = document.getElementById('floor-inputs');
+
+            for (let i = 1; i <= numberOfFloors; i++) {
+                const inputField = document.createElement('div');
+                inputField.innerHTML = ` 
+                    <label for="sqm-floor-${i}" class="block text-gray-700 font-medium mb-2">Floor-${i} (sqm) *</label>
+                    <input 
+                        id="sqm-floor-${i}" 
+                        type="number" 
+                        min="1" 
+                        class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        oninput="updateFloorSummary(${i})"
+                    >
+                    <p id="error-message-floor-${i}" class="text-red-500 text-sm mt-2 hidden">
+                        Please enter a valid positive number.
+                    </p>
+                `;
+                floorInputsDiv.appendChild(inputField);
+            }
+        }
+
+        // Function to update floor summary and total sqm when input is changed
+        function updateFloorSummary(floorNumber) {
+            const inputField = document.getElementById(`sqm-floor-${floorNumber}`);
+            const errorMessage = document.getElementById(`error-message-floor-${floorNumber}`);
+            const value = inputField.value;
+            const floorSummary = document.getElementById('floor-summary');
+            const totalDisplay = document.getElementById('total-sqm');
+            let total = 0;
+
+            if (isNaN(value) || value < 1) {
+                errorMessage.classList.remove('hidden');
+                const existingItem = document.querySelector(`#floor-summary li:nth-child(${floorNumber})`);
+                if (existingItem) floorSummary.removeChild(existingItem);
+            } else {
+                errorMessage.classList.add('hidden');
+                let listItem = document.querySelector(`#floor-summary li:nth-child(${floorNumber})`);
+                if (!listItem) {
+                    listItem = document.createElement('li');
+                    listItem.style.setProperty('--clr', getColor(floorNumber));
+                    listItem.classList.add("rounded-lg", "p-4", "text-white", "relative", "shadow-lg", "transform");
+                    floorSummary.appendChild(listItem);
+                }
+                listItem.innerHTML = `<a href="#">Floor-${floorNumber}: ${value} sqm</a>`;
+            }
+
+            // Update the total sqm
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                const inputValue = parseInt(input.value, 10);
+                if (!isNaN(inputValue) && inputValue > 0) total += inputValue;
+            });
+
+            totalDisplay.innerText = `Total Area: ${total} sqm`;
+        }
+
+        // Function to get color based on floor number (dynamic color for each floor)
+        function getColor(floorNumber) {
+            const colors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD'];
+            return colors[(floorNumber - 1) % colors.length];
+        }
+
+        // Initialize input fields on page load
+        window.onload = function() {
+            createInputFields();
+            const storedFloorData = JSON.parse(localStorage.getItem('floorData'));
+            if (storedFloorData) {
+                let total = 0;
+                const floorSummary = document.getElementById('floor-summary');
+                storedFloorData.forEach((floor, index) => {
+                    const inputField = document.getElementById(`sqm-floor-${index + 1}`);
+                    if (inputField) {
+                        inputField.value = floor.sqm;
+                        total += floor.sqm;
+                    }
+
+                    let listItem = document.querySelector(`#floor-summary li:nth-child(${index + 1})`);
+                    if (!listItem) {
+                        listItem = document.createElement('li');
+                        listItem.style.setProperty('--clr', getColor(index + 1));
+                        listItem.classList.add("rounded-lg", "p-4", "text-white", "relative", "shadow-lg", "transform");
+                        floorSummary.appendChild(listItem);
+                    }
+                    listItem.innerHTML = `<a href="#">${floor.name}: ${floor.sqm} sqm</a>`;
+                });
+
+                document.getElementById('total-sqm').innerText = `Total Area: ${total} sqm`;
+            }
+        };
+
+        // Handle Next button click to store data in localStorage and navigate
+        document.getElementById('next-btn').addEventListener('click', () => {
+            const floorsData = [];
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach((input, index) => {
+                if (input.value && input.value > 0) {
+                    const floorValue = parseInt(input.value, 10);
+                    floorsData.push({
+                        name: `Floor-${index + 1}`,
+                        sqm: floorValue,
+                        totalSqm: floorValue
+                    });
+                }
+            });
+
+            localStorage.setItem('floorData', JSON.stringify(floorsData));
+            localStorage.removeItem('selectedSpaces');
+            window.location.href = 'third.html';
+        });
+
+        // Handle Reset button click to clear the data
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            // Clear input fields
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => input.value = '');
+
+            // Clear floor summary
+            const floorSummary = document.getElementById('floor-summary');
+            floorSummary.innerHTML = '';
+
+            // Reset total area
+            const totalDisplay = document.getElementById('total-sqm');
+            totalDisplay.innerText = 'Total: 0 sqm';
+
+            // Clear localStorage
+            localStorage.removeItem('floorData');
+           
+        });
+    </script>
+</body>
+</html>

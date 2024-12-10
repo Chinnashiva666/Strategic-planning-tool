@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+   <style>
+
+ 	body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        /* Animation for the department card */
+        @keyframes hoverAnimation {
+            0% {
+                transform: translateX(0);
+                background: #3e3f46;
+            }
+            50% {
+                transform: translateX(-10px);
+                background: var(--clr);
+            }
+            100% {
+                transform: translateX(0);
+                background: #3e3f46;
+            }
+        }
+
+        ul li {
+            list-style: none;
+            padding: 15px;
+            background: #3e3f46;
+            margin: 10px 0;
+            position: relative;
+            transition: transform 0.5s, background 0.5s;
+            animation: hoverAnimation 3s infinite ease-in-out;
+        }
+
+        ul li::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -40px;
+            width: 40px;
+            height: 100%;
+            background: #3e3f46;
+            filter: brightness(0.7);
+            transform-origin: right;
+            transform: skewY(45deg);
+            transition: background 0.5s;
+        }
+
+        ul li:hover::before {
+            background: var(--clr);
+        }
+
+        ul li a {
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Set different colors for each item dynamically */
+        ul li:nth-child(1) {
+            --clr: #FF5733;
+        }
+
+        ul li:nth-child(2) {
+            --clr: #33FF57;
+        }
+
+        ul li:nth-child(3) {
+            --clr: #3357FF;
+        }
+
+        ul li:nth-child(4) {
+            --clr: #F1C40F;
+        }
+
+        ul li:nth-child(5) {
+            --clr: #8E44AD;
+        }
+
+/* Left Panel styling */
+        .left-panel {
+            overflow-y: auto;
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Right Panel (Floor Levels) */
+        .right-panel {
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            background-color: #f7fafc;
+        }
+
+ .space-card {
+            background-color: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+        }
+
+
+
+
+ /* Tooltip container */
+    .bi-info-circle[data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 5px;
+        background-color: #333;
+        color: white;
+        font-size: 0.875rem;
+        border-radius: 5px;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+
+.toast-container {
+        position: fixed;
+        top: 20px; /* Ensure the container is at the top */
+        right: 20px;
+        z-index: 50;
+        display: flex;
+        flex-direction: column-reverse; /* Stack new toasts on top */
+        gap: 10px; /* Space between toasts */
+    }
+
+    .toast {
+        animation: fadeIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        max-width: 300px;
+        margin-bottom: 10px; /* Ensure there's space between toasts */
+    }
+
+
+
+    /* Customize the color for different types of toasts */
+    .toast.success {
+        background-color: #22c55e; /* Green for success */
+    }
+
+    .toast.error {
+        background-color: #ef4444; /* Red for error */
+    }
+
+
+    </style>
+
+</head>
+<body class="bg-gray-50 font-sans">
+ <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Left Pane (Input Section) -->
+        <div class="left-panel w-full md:w-1/2 p-8 md:p-16 bg-white shadow-lg rounded-lg">
+            
+<h1 class="text-3xl font-extrabold text-gray-800 uppercase tracking-widest mb-6">HAWORTH</h1>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Department Planning</h3>
+            <p class="text-base text-gray-600 mb-6 leading-relaxed">
+                Add Departments that you need for your planning and provide details like Head Count and Seat Count.
+            </p>
+
+         <!-- Target Density Input Section as a Card -->
+<div class="space-card card block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 ">
+      
+    <!-- SVG Icon for Target Density -->
+    <div class="mb-4 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.25rem" height="1.25rem" fill="currentColor" class="bi bi-grid-3x3-gap text-gray-600" viewBox="0 0 16 16">
+            <path d="M3.5 0a.5.5 0 0 0-.5.5v3A.5.5 0 0 0 3.5 4h3A.5.5 0 0 0 7 3.5V.5a.5.5 0 0 0-.5-.5h-3zM3 3v-.5h3V3H3zM3 7v-.5h3V7H3zM3 11v-.5h3V11H3zM7 7v-.5h3V7H7zM7 11v-.5h3V11H7zM11 3v-.5a.5.5 0 0 0-.5-.5h-3A.5.5 0 0 0 7 2.5V3h3a.5.5 0 0 0 .5-.5zM11 7v-.5h3V7h-3zM11 11v-.5h3V11h-3zM15 0a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5V.5a.5a.5 0 0 0-.5-.5h-3z"/>
+        </svg>
+        <!-- Target Density Label -->
+        <label for="target-density" class="block text-sm font-medium text-gray-600 mb-2">Target Density (sqm/person)</label>
+    </div>
+
+    <input 
+        type="number" 
+        id="target-density" 
+        min="1" 
+        class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" 
+        placeholder="Enter Target Density">
+    
+    <button 
+        id="save-target-density" 
+        class="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition-colors">
+        Save
+    </button>
+</div>
+
+
+
+           <!-- Department Input Section -->
+<div id="department-section" class="mb-8 mt-4 space-card card block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 ">
+    
+    <!-- Department Name Section -->
+    <div class="mb-4 flex items-center space-x-2">
+        <!-- SVG Icon for Department Name -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.25rem" height="1.25rem" fill="currentColor" class="bi bi-person-badge text-gray-600" viewBox="0 0 16 16">
+            <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+            <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492z"/>
+        </svg>
+        <!-- Department Name Label -->
+        <label for="department-name" class="block text-sm font-medium text-gray-600 mb-2">Department Name</label>
+    </div>
+    <input type="text" id="department-name" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" placeholder="Enter Department Name">
+    
+    <!-- Head Count Section -->
+    <div class="mb-4 flex items-center space-x-2">
+        <!-- SVG Icon for Head Count -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.25rem" height="1.25rem" fill="currentColor" class="bi bi-people text-gray-600" viewBox="0 0 16 16">
+            <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
+        </svg>
+        <!-- Head Count Label -->
+        <label for="head-count" class="text-sm font-medium text-gray-600 mb-2">Head Count</label>
+    </div>
+    <input type="number" id="head-count" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" placeholder="Enter Head Count">
+    
+    <!-- Seat Count Section -->
+    <div class="mb-4 flex items-center space-x-2">
+        <!-- SVG Icon for Seat Count -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="1.25rem" height="1.25rem" fill="currentColor" class="bi bi-chair text-gray-600" viewBox="0 0 16 16">
+            <path d="M4 1a1 1 0 0 0-1 1v8H1a1 1 0 0 0-.707 1.707l7 7a1 1 0 0 0 1.414 0l7-7A1 1 0 0 0 15 10h-2V2a1 1 0 0 0-1-1H4z"/>
+        </svg>
+        <!-- Seat Count Label -->
+        <label for="seat-count" class="block text-sm font-medium text-gray-600 mb-2">Seat Count</label>
+    </div>
+    <input type="number" id="seat-count" class="w-full p-2 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" placeholder="Enter Seat Count">
+
+    <button id="add-department" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 w-full">Add Department</button>
+
+</div>
+
+
+
+<!-- Reset Button -->
+<button id="reset-btn" class="mt-6 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" onclick="reset()">Reset</button>
+
+            <!-- Space Selection Button -->
+           <button id="next-btn" class="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Next</button>
+        </div>
+
+     <!-- Right Pane (Preview Section) -->
+<div class="right-panel w-full md:w-1/2 bg-gray-900 p-8 md:p-16 scroll-smooth">
+    <!-- Display Target Density -->
+    <div class="mb-8">
+        <h3 class="text-xl font-semibold text-white">Target Density : </h3>
+        <p id="target-density-preview" class="text-lg text-gray-300">Not Set</p>
+    </div>
+
+    <!-- Department Preview Section -->
+    <h3 class="text-xl font-semibold text-white mb-4">Department Planning : </h3>
+    
+    <!-- Table for Department Planning -->
+    <table class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm dark:divide-gray-700 dark:bg-gray-900">
+        <thead>
+            <tr class="bg-gray-800 ltr:text-left rtl:text-right">
+                <th class="whitespace-nowrap px-4 py-2 font-medium text-white ">Department Name</th>
+                <th class="whitespace-nowrap px-4 py-2 font-medium text-white ">Head Count</th>
+                <th class="whitespace-nowrap px-4 py-2 font-medium text-white ">Seat Count</th>
+                <th class="whitespace-nowrap px-4 py-2 font-medium text-white ">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="department-preview" class="divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- Department rows will appear here -->
+        </tbody>
+    </table>
+</div>
+
+
+    </div>
+
+
+
+    <script>
+        
+
+// Function to load data from local storage
+function loadFromLocalStorage() {
+    const targetDensity = localStorage.getItem('targetDensity');
+    if (targetDensity) {
+        document.getElementById('target-density-preview').textContent = `${targetDensity} sqm/person`;
+    }
+
+    // Load departments if they exist in local storage
+    const departmentsData = JSON.parse(localStorage.getItem('departmentsData'));
+    const departmentPreview = document.getElementById('department-preview');
+    // Clear existing rows
+    departmentPreview.innerHTML = '';
+
+    if (departmentsData) {
+        departmentsData.forEach(department => {
+            const departmentRow = document.createElement('tr');
+            departmentRow.classList.add('bg-gray-700', 'text-white', 'border-b', 'hover:bg-gray-600');
+            departmentRow.innerHTML = `
+                <td class="whitespace-nowrap px-4 py-2 font-medium text-white dark:text-white">${department.name}</td>
+                <td class="whitespace-nowrap px-4 py-2 font-medium text-white dark:text-white">${department.headCount}</td>
+                <td class="whitespace-nowrap px-4 py-2 font-medium text-white dark:text-white">${department.seatCount}</td>
+                <td class="whitespace-nowrap px-4 py-2">
+                    <button class="remove-department inline-block rounded bg-red-500 px-4 py-2 text-xs font-medium text-white hover:bg-red-600 transition duration-300">Remove</button>
+                </td>
+            `;
+            departmentPreview.appendChild(departmentRow);
+
+            // Add functionality to remove the department row
+            departmentRow.querySelector('.remove-department').addEventListener('click', () => {
+                departmentRow.remove();
+                updateDepartmentsInLocalStorage();
+                showToast('Department removed!', 'success');
+            });
+        });
+    }
+}
+
+// Save target density to local storage
+document.getElementById('save-target-density').addEventListener('click', () => {
+    const targetDensityInput = document.getElementById('target-density').value;
+
+    // Check if the input is a valid number and greater than 2
+    const targetDensity = parseFloat(targetDensityInput);
+    if (isNaN(targetDensity) || targetDensity <= 2) {
+        document.getElementById('target-density').value = '';
+        showToast('Target density must be a number greater than 2.', 'error');
+       
+        return;
+    }
+
+    // Save target density to localStorage as a number
+    localStorage.setItem('targetDensity', targetDensity);
+
+    // Show success message
+    showToast('Target density saved successfully!', 'success');
+
+    // Clear the input field after saving
+    document.getElementById('target-density').value = '';
+
+    // Update the preview
+    loadFromLocalStorage();
+});
+
+
+// Add department and display it as a row in the table
+document.getElementById('add-department').addEventListener('click', () => {
+    const departmentName = document.getElementById('department-name').value;
+    const headCount = document.getElementById('head-count').value;
+    const seatCount = document.getElementById('seat-count').value;
+
+    if (!departmentName || !headCount || !seatCount) {
+        showToast('Please fill out all department fields.', 'error');
+        return;
+    }
+
+    const newDepartment = {
+        name: departmentName,
+        headCount: headCount,
+        seatCount: seatCount
+    };
+
+    const departmentsData = JSON.parse(localStorage.getItem('departmentsData')) || [];
+
+    // Check if department already exists
+    if (departmentsData.some(department => department.name === newDepartment.name)) {
+        showToast('This department already exists!', 'error');
+        return;
+    }
+
+    departmentsData.push(newDepartment);
+    localStorage.setItem('departmentsData', JSON.stringify(departmentsData));
+
+    loadFromLocalStorage(); // Reload the list of departments from local storage
+
+    showToast('Department added successfully!', 'success');
+    document.getElementById('department-name').value = '';
+    document.getElementById('head-count').value = '';
+    document.getElementById('seat-count').value = '';
+});
+
+// Update local storage after removing a department
+function updateDepartmentsInLocalStorage() {
+    const departmentRows = document.querySelectorAll('#department-preview tr');
+    const updatedDepartmentsData = [];
+
+    departmentRows.forEach(row => {
+        const name = row.querySelector('td:nth-child(1)').textContent;
+        const headCount = row.querySelector('td:nth-child(2)').textContent;
+        const seatCount = row.querySelector('td:nth-child(3)').textContent;
+
+        updatedDepartmentsData.push({ name, headCount, seatCount });
+    });
+
+    localStorage.setItem('departmentsData', JSON.stringify(updatedDepartmentsData));
+}
+
+// Show a toast notification
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.classList.add('toast', type === 'success' ? 'bg-green-600' : 'bg-red-600');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+
+// Handle Next button click to store data in localStorage and navigate
+document.getElementById('next-btn').addEventListener('click', () => {
+
+    //const targetDensity = document.getElementById('target-density-preview').textContent;
+
+   const targetDensityInput = localStorage.getItem('targetDensity');
+    
+    // Extract the numeric part before saving (ignore " sqm/person")
+     const targetDensity = parseFloat(targetDensityInput);
+    console.log(targetDensity);
+
+    const departmentCards = document.querySelectorAll('#department-preview tr');
+    
+    // Check if target density is set and at least one department is added
+    if (targetDensity === 'Not Set' || departmentCards.length === 0) {
+        showToast('Please fill in all required fields and add at least one department.', 'error');
+        return;
+    }
+
+    // Collect the departments data
+    const departmentsData = [];
+    departmentCards.forEach(row => {
+        const departmentName = row.cells[0].textContent;
+        const headCount = row.cells[1].textContent;
+        const seatCount = row.cells[2].textContent;
+        
+        departmentsData.push({
+            name: departmentName,
+            headCount: headCount,
+            seatCount: seatCount
+        });
+    });
+
+    // Store the data in localStorage
+    localStorage.setItem('departmentsData', JSON.stringify(departmentsData));
+    localStorage.setItem('targetDensity', targetDensity);
+
+let floorData = JSON.parse(localStorage.getItem("floorData")) || [];
+// Calculate the available seats based on sqm and targetDensity
+    floorData.forEach(floor => {
+        if (floor.sqm && targetDensity) {
+            floor.seatsAvailable = Math.floor(floor.sqm / targetDensity);
+        }
+    });
+
+    // Save the updated floorData back to localStorage
+    localStorage.setItem("floorData", JSON.stringify(floorData));
+
+    // Optionally, you can log it to the console or proceed to the next step
+    console.log("Updated floorData:", floorData);
+
+    // Redirect or navigate
+    window.location.href = 'sixth.html';  // Replace with actual redirection path
+});
+
+// Reset data and clear local storage
+function reset() {
+
+// Clear all input fields in the left pane
+        document.getElementById('target-density').value = '';
+        document.getElementById('department-name').value = '';
+        document.getElementById('head-count').value = '';
+        document.getElementById('seat-count').value = '';
+
+    localStorage.removeItem('targetDensity');
+    localStorage.removeItem('departmentsData');
+    document.getElementById('target-density-preview').textContent = 'Not Set';
+    document.getElementById('department-preview').innerHTML = '';
+    showToast('Data Reset!', 'success');
+}
+
+// Load data from localStorage when the page loads
+window.addEventListener('load', loadFromLocalStorage);
+
+
+    </script>
+
+    
+</body>
+</html>

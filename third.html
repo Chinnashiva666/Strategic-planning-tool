@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAWORTH - Space Planning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+
+ /* Scrollbar styles */ 
+::-webkit-scrollbar { width: 5px; /* Adjust the width */ } 
+::-webkit-scrollbar-track { background: #f1f1f1; /* Track color */ }
+ ::-webkit-scrollbar-thumb { background: #888; /* Thumb color */ border-radius: 5px; /* Rounded corners */ } 
+::-webkit-scrollbar-thumb:hover { background: #555; /* Hover color */ }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .card-label {
+            color: #4a5568;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-checkbox {
+            transform: scale(1.2);
+        }
+
+        .button-custom-space {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 0.375rem;
+            text-align: center;
+            transition: background-color 0.2s ease;
+        }
+
+	/* Left Panel styling */
+        .left-panel {
+            overflow-y: auto;
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Right Panel  */
+        .right-panel {
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            background-color: #f7fafc;
+        }
+
+
+
+        #selected-spaces {
+            
+            overflow-y: auto;  /* Enable vertical scrolling */   
+                    }
+
+        .button-custom-space:hover {
+            background-color: #2563eb;
+        }
+
+        .space-card {
+            background-color: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+        }
+
+        /* Toast Styles */
+        .toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;f
+        }
+
+        .toast.show {
+            display: block;
+            animation: showToast 3s forwards;
+        }
+
+        @keyframes showToast {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col md:flex-row p-8">
+        <!-- Left Panel -->
+        <div class="left-panel w-full md:w-1/2 p-8 md:p-16 bg-white shadow-lg rounded-lg">
+            <h1 class="text-3xl font-extrabold text-gray-800 uppercase tracking-widest mb-6">HAWORTH</h1>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Space Planning</h3>
+            <p class="text-base text-gray-600 mb-6 leading-relaxed">
+                Select spaces that you need for your planning and provide details like type and area (sqm).
+            </p>
+
+            <!-- Default Spaces Cards -->
+            <div class="card-container grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Reception Card -->
+                <div class="space-card card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <h4 class="card-title mb-4">Reception</h4>
+                        <input type="checkbox" id="reception" class="space-checkbox">
+                    </div>
+                    <label for="reception" class="card-label">Add Reception</label>
+                </div>
+
+                <!-- Cafe Card -->
+                <div class="space-card card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <h4 class="card-title mb-4">Cafe</h4>
+                        <input type="checkbox" id="cafe" class="space-checkbox">
+                    </div>
+                    <label for="cafe" class="card-label">Add Cafe</label>
+                </div>
+
+                <!-- Library Card -->
+                <div class="space-card card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <h4 class="card-title mb-4">Library</h4>
+                        <input type="checkbox" id="library" class="space-checkbox">
+                    </div>
+                    <label for="library" class="card-label">Add Library</label>
+                </div>
+
+                <!-- Meeting Room Card -->
+                <div class="space-card card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <h4 class="card-title mb-4">Meeting Room</h4>
+                        <input type="checkbox" id="meeting-room" class="space-checkbox">
+                    </div>
+                    <label for="meeting-room" class="card-label">Add Meeting Room</label>
+                </div>
+            </div>
+
+            <!-- Custom Space Card -->
+            <div class="space-card card p-8 bg-white shadow-xl rounded-lg mt-8 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                <h4 class="card-title mb-4">Custom Space</h4>
+                <label for="custom-space-name" class="text-gray-700">Enter Custom Space Name</label>
+                <input type="text" id="custom-space-name" class="w-full p-3 border border-gray-300 rounded-lg mt-2 mb-4" placeholder="Enter custom space name">
+                <button id="add-custom-space" class="button-custom-space w-full">Add Custom Space</button>
+            </div>
+
+<!-- Reset Button -->
+<button id="reset-btn" class="mt-6 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Reset</button>
+
+            <!-- Space Selection Button -->
+           <button id="next-btn" class="mt-6 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" disabled>Next</button>
+
+        </div>
+
+        <!-- Right Panel (Selected Spaces) -->
+        <div class="right-panel w-full md:w-1/2 bg-gray-900 p-8 md:p-16 scroll-smooth">
+            <h3 class="text-2xl font-bold text-white mb-6">Selected Spaces</h3>
+            <ul id="selected-spaces" class="space-y-4">
+                <!-- List of selected spaces will appear here -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div id="toast" class="toast">
+        Missing data for selected spaces.
+    </div>
+
+    <script>
+        const selectedSpaces = [];
+
+
+window.onload = () => {
+    // Get the 'Next' button element before using it
+    const nextBtn = document.getElementById('next-btn');
+    
+
+    // Check if selected spaces data exists in localStorage
+    const savedSpaces = localStorage.getItem('selectedSpaces');
+    
+    if (savedSpaces) {
+        const selectedSpacesData = JSON.parse(savedSpaces);
+
+        // Update the selectedSpaces array and UI based on saved data
+        selectedSpacesData.forEach(space => {
+            const spaceId = space.name.toLowerCase().replace(/\s+/g, '-');
+            const checkbox = document.getElementById(spaceId);
+            const selectedSpacesList = document.getElementById('selected-spaces');
+
+            // Mark the checkbox as checked
+            if (checkbox) checkbox.checked = true;
+
+            // Add the space to the selected list if not already present
+            if (!selectedSpaces.includes(spaceId)) {
+                selectedSpaces.push(spaceId);
+
+                const listItem = document.createElement('li');
+                listItem.id = `space-${spaceId}`;
+                listItem.classList.add('bg-gray-800', 'text-white', 'rounded-lg', 'shadow-md', 'p-6', 'hover:bg-gray-700', 'transition', 'duration-300','h-fit');
+                listItem.innerHTML = ` 
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-lg font-semibold">${space.name}</h4>
+                        <button onclick="removeSpace('${listItem.id}')" class="text-red-400 hover:text-red-600 focus:outline-none">Remove</button>
+                    </div>
+                    <div class="mt-4 space-y-4">
+                        <label for="${spaceId}-type" class="text-sm font-medium text-gray-300">Select Type</label>
+                        <select id="${spaceId}-type" class="w-full p-2 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none">
+                            <option value="meet" ${space.type === 'meet' ? 'selected' : ''}>Meet</option>
+                            <option value="greet" ${space.type === 'greet' ? 'selected' : ''}>Greet</option>
+                            <option value="task" ${space.type === 'task' ? 'selected' : ''}>Task</option>
+                        </select>
+                        <label for="${spaceId}-sqm" class="text-sm font-medium text-gray-300">Square Meters</label>
+                        <input type="number" id="${spaceId}-sqm" class="w-full p-3 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none" min="1" value="${space.sqm}" placeholder="Enter sqm">
+                    </div>
+                `;
+                selectedSpacesList.appendChild(listItem);
+            }
+
+// Call the function to remove 'spaces' from all floors
+removeSpacesFromAllFloors();
+
+// Call the function to update sqm
+updateSqmToTotalSqm();
+
+        });
+
+        // Enable next button if at least one space is selected
+        if (selectedSpaces.length > 0) {
+            nextBtn.disabled = false;
+        }
+    }
+};
+
+
+// Retrieve floorData from localStorage (or initialize an empty array if not available)
+let floorData = JSON.parse(localStorage.getItem('floorData')) || [];
+
+// Function to update sqm to be equal to totalSqm for each floor
+function updateSqmToTotalSqm() {
+    // Iterate over each floor and set sqm equal to totalSqm
+    floorData.forEach(floor => {
+        floor.sqm = floor.totalSqm;
+    });
+
+    // Update localStorage with the modified floorData
+    localStorage.setItem('floorData', JSON.stringify(floorData));
+    
+    // Log the updated floorData to verify
+    console.log('Updated floorData in localStorage:', floorData);
+}
+
+
+
+
+// Existing code to handle adding/removing spaces, etc.
+
+
+        // Update selected spaces list when checkboxes are clicked
+        document.querySelectorAll('.space-checkbox').forEach((checkbox) => {
+            checkbox.addEventListener('change', function() {
+                const spaceName = this.id;
+                const selectedSpacesList = document.getElementById('selected-spaces');
+                const nextBtn = document.getElementById('next-btn');
+
+                if (this.checked) {
+                    selectedSpaces.push(spaceName);
+                    const listItem = document.createElement('li');
+                    listItem.id = `space-${spaceName}`;  // Set unique ID for each list item
+                    listItem.classList.add('bg-gray-800', 'text-white', 'rounded-lg', 'shadow-md', 'p-6', 'hover:bg-gray-700', 'transition', 'duration-300');
+                    listItem.innerHTML = ` 
+<div class="flex justify-between items-start mb-4">
+                         <h4 class="text-lg font-semibold">${spaceName.charAt(0).toUpperCase() + spaceName.slice(1).replace(/-/g, ' ')}</h4>
+                        <button onclick="removeSpace('${listItem.id}')" class="text-red-400 hover:text-red-600 focus:outline-none">Remove</button>
+</div>
+                        <div class="mt-4 space-y-4">
+                            <label for="${spaceName}-type" class="text-sm font-medium text-gray-300">Select Type</label>
+                            <select id="${spaceName}-type" class="w-full p-3 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none">
+                                <option value="meet">Meet</option>
+                                <option value="greet">Greet</option>
+                                <option value="task">Task</option>
+                            </select>
+                            <label for="${spaceName}-sqm" class="text-sm font-medium text-gray-300">Square Meters</label>
+                            <input type="number" id="${spaceName}-sqm" class="w-full p-3 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none"  min="1" placeholder="Enter sqm">
+                        </div>
+                    `;
+                    selectedSpacesList.appendChild(listItem);
+                } else {
+                    const index = selectedSpaces.indexOf(spaceName);
+                    if (index > -1) {
+                        selectedSpaces.splice(index, 1);
+                        const spaceItem = document.getElementById(`space-${spaceName}`);
+                        selectedSpacesList.removeChild(spaceItem);
+                    }
+                }
+
+                // Enable next button if at least one space is selected
+                if (selectedSpaces.length > 0) {
+                    nextBtn.disabled = false;
+                } else {
+                    nextBtn.disabled = true;
+                }
+            });
+        });
+
+        // Add custom space to the list
+        document.getElementById('add-custom-space').addEventListener('click', () => {
+            const customSpaceName = document.getElementById('custom-space-name').value;
+            if (customSpaceName) {
+                const customSpaceId = customSpaceName.toLowerCase().replace(/\s+/g, '-');
+                selectedSpaces.push(customSpaceId);
+                const selectedSpacesList = document.getElementById('selected-spaces');
+                const listItem = document.createElement('li');
+                listItem.id = `space-${customSpaceId}`;
+                listItem.classList.add('bg-gray-800', 'text-white', 'rounded-lg', 'shadow-md', 'p-6', 'hover:bg-gray-700', 'transition', 'duration-300','scroll-smooth');
+                listItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-lg font-semibold">${customSpaceName}</h4>
+                        <button onclick="removeSpace('${listItem.id}')" class="text-red-400 hover:text-red-600 focus:outline-none">Remove</button>
+                    </div>
+                    <div class="mt-4 space-y-4">
+                        <label for="${customSpaceId}-type" class="text-sm font-medium text-gray-300">Select Type</label>
+                        <select id="${customSpaceId}-type" class="w-full p-3 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none">
+                            <option value="meet">Meet</option>
+                            <option value="greet">Greet</option>
+                            <option value="task">Task</option>
+                        </select>
+                        <label for="${customSpaceId}-sqm" class="text-sm font-medium text-gray-300">Square Meters</label>
+                        <input type="number" id="${customSpaceId}-sqm" class="w-full p-3 mt-2 bg-gray-700 text-gray-300 border border-gray-600 rounded-lg focus:outline-none" min="1" placeholder="Enter sqm">
+                    </div>
+                `;
+                selectedSpacesList.appendChild(listItem);
+                document.getElementById('custom-space-name').value = '';  // Clear input
+            }
+        });
+
+        // Remove space from selected spaces
+        function removeSpace(spaceId) {
+            const spaceName = spaceId.replace('space-', '');
+            const index = selectedSpaces.indexOf(spaceName);
+            if (index > -1) {
+                selectedSpaces.splice(index, 1);
+                const spaceItem = document.getElementById(spaceId);
+                spaceItem.remove();
+                const checkbox = document.getElementById(spaceName);
+                checkbox.checked = false;
+            }
+
+            // Disable next button if no spaces are selected
+            if (selectedSpaces.length === 0) {
+                document.getElementById('next-btn').disabled = true;
+            }
+        }
+
+        // Show toast message
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+document.getElementById('next-btn').addEventListener('click', () => {
+    const selectedData = [];
+    const missingSpaces = [];
+
+    // Collect selected space data
+    selectedSpaces.forEach(spaceId => {
+        const spaceName = spaceId.replace('space-', '');
+        const type = document.getElementById(`${spaceName}-type`)?.value || '';
+        const sqm = document.getElementById(`${spaceName}-sqm`)?.value || '';
+
+        // Check if both type and sqm are entered
+        if (!type || !sqm) {
+            missingSpaces.push(spaceName);  // Collect names of spaces with missing data
+        } else {
+            selectedData.push({ name: spaceName, type, sqm });
+        }
+    });
+
+    if (missingSpaces.length > 0) {
+        // Show toast with missing spaces
+        showToast(`Missing data for spaces: ${missingSpaces.join(', ')}`);
+    } else {
+        // Store selected data in local storage
+        localStorage.setItem('selectedSpaces', JSON.stringify(selectedData));
+
+        // Proceed to next step with the selected data
+        console.log('Selected Spaces Data:', selectedData);
+        window.location.href = "fourth.html";  // Navigate to fourth.html
+    }
+});
+  
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+    // Clear the selectedSpaces array
+    selectedSpaces.length = 0;
+
+    // Clear the selected spaces list on the UI
+    const selectedSpacesList = document.getElementById('selected-spaces');
+    selectedSpacesList.innerHTML = '';  // Remove all list items
+
+    // Uncheck all checkboxes
+    document.querySelectorAll('.space-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+
+    // Clear all input fields (type and sqm) inside selected spaces
+    document.querySelectorAll('select, input').forEach(input => {
+        input.value = '';  // Clear all inputs
+    });
+
+    // Disable the next button since no spaces are selected
+    document.getElementById('next-btn').disabled = true;
+
+    // Clear localStorage
+    localStorage.removeItem('selectedSpaces');
+
+
+    // Clear the toast
+    const toast = document.getElementById('toast');
+    toast.classList.remove('show');
+});
+
+
+// Function to remove the 'spaces' key from all floors
+function removeSpacesFromAllFloors() {
+    // Iterate over each floor and remove the 'spaces' key
+    floorData.forEach(floor => {
+        floor.spaces = [];
+    });
+
+    // Update localStorage with the modified floorData
+    localStorage.setItem('floorData', JSON.stringify(floorData));
+    
+    // Log the updated floorData to verify
+    console.log('Updated floorData in localStorage:', floorData);
+}
+
+
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor Plan - Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .drag-space {
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+            width: 100%;
+            text-align: center;
+        }
+
+        .drag-space:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .drag-space.dragging {
+            opacity: 0.5;
+        }
+
+        .floor-stack {
+            border: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 250px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .floor-stack:hover {
+            background-color: #e2e8f0;
+        }
+
+        .drop-zone.hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        /* Left Panel styling */
+        .left-panel {
+            overflow-y: auto;
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Right Panel (Floor Levels) */
+        .right-panel {
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            background-color: #f7fafc;
+        }
+
+      .toast-container {
+        position: fixed;
+        top: 20px; /* Ensure the container is at the top */
+        right: 20px;
+        z-index: 50;
+        display: flex;
+        flex-direction: column-reverse; /* Stack new toasts on top */
+        gap: 10px; /* Space between toasts */
+    }
+
+    .toast {
+        animation: fadeIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
+        padding: 10px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        max-width: 300px;
+        margin-bottom: 10px; /* Ensure there's space between toasts */
+    }
+
+
+
+    /* Customize the color for different types of toasts */
+    .toast.success {
+        background-color: #22c55e; /* Green for success */
+    }
+
+    .toast.error {
+        background-color: #ef4444; /* Red for error */
+    }
+
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Left Panel (Selected Spaces) -->
+        <div class="left-panel w-full md:w-1/2 p-8 md:p-16 bg-white shadow-lg rounded-lg">
+            <h1 class="text-3xl font-extrabold text-gray-800 uppercase tracking-widest mb-6">HAWORTH</h1>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Floor Plan Stratergy</h3>
+            <p class="text-base text-gray-600 mb-6 leading-relaxed">
+                Drag and drop spaces onto the floor stacks and calculate the available area.
+            </p>
+
+            <!-- Selected Spaces -->
+            <div id="selected-spaces" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Dynamic spaces will be added here -->
+            </div>
+		
+
+<!-- Add Reset Button -->
+<button id="reset-button" class="mt-6 px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
+    Reset
+</button>
+
+		
+            <!-- Next Button moved to Left Panel -->
+            <button id="next-button" class="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300">
+                Next
+            </button>
+        </div>
+
+        <!-- Right Panel (Floor Levels) -->
+        <div class="right-panel w-full md:w-1/2 bg-gray-900 p-8 md:p-16 scroll-smooth">
+            <h3 class="text-2xl font-semibold text-white mb-6">Floor Levels</h3>
+
+            <!-- Floor Stacks -->
+            <div id="floor-stacks" class="space-y-8">
+                <!-- Dynamic floor stacks will be added here -->
+            </div>
+        </div>
+    </div>
+
+<script>
+
+    // Load spaces and floors from localStorage
+    const selectedSpaces = JSON.parse(localStorage.getItem('selectedSpaces')) || [
+        { name: 'living-room', sqm: 50 },
+        { name: 'kitchen', sqm: 30 },
+        { name: 'bedroom', sqm: 40 },
+    ];
+    const floorStacks = JSON.parse(localStorage.getItem('floorData')) || [
+        { name: 'Floor 1', sqm: 100 },
+        { name: 'Floor 2', sqm: 80 },
+    ];
+
+    // Populate Selected Spaces
+    const selectedSpacesList = document.getElementById('selected-spaces');
+    selectedSpaces.forEach(space => createDraggableSpace(space));
+
+    // Populate Floor Stacks
+    const floorStacksContainer = document.getElementById('floor-stacks');
+    floorStacks.forEach(floor => createFloorStack(floor));
+
+    // Create a draggable space
+    function createDraggableSpace(space) {
+        const spaceItem = document.createElement('div');
+        spaceItem.className = 'space-card card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700';
+        spaceItem.draggable = true;
+        spaceItem.id = `drag-${space.name}`;
+        spaceItem.innerHTML = `
+            <h4 class="text-xl font-semibold text-gray-800">${space.name.replace(/-/g, ' ').toUpperCase()}</h4>
+            <p class="text-sm text-gray-600">${space.sqm} sqm</p>
+        `;
+
+        spaceItem.addEventListener('dragstart', handleDragStart);
+        spaceItem.addEventListener('dragend', handleDragEnd);
+        selectedSpacesList.appendChild(spaceItem);
+    }
+
+// Reset functionality
+document.getElementById('reset-button').addEventListener('click', function () {
+    // Clear all spaces from floor stacks in the DOM
+    document.querySelectorAll('.floor-stack .bg-green-500').forEach(space => {
+        space.remove();
+    });
+
+    // Reset remaining areas to initial values in the DOM
+    document.querySelectorAll('.floor-stack').forEach(floorStack => {
+        const remainingElement = floorStack.querySelector('span[id^="remaining-sqm"]');
+        const totalElement = floorStack.querySelector('span[id="total-sqm"]');
+        remainingElement.innerText = totalElement.innerText; // Reset remaining to total
+    });
+
+    // Update floorData in localStorage by removing spaces
+    const floorData = JSON.parse(localStorage.getItem('floorData')) || [];
+    floorData.forEach(floor => {
+        floor.spaces = []; // Clear spaces array
+        floor.sqm = floor.totalSqm; // Reset remaining sqm to total sqm
+    });
+
+    // Save the updated floorData back to localStorage
+    localStorage.setItem('floorData', JSON.stringify(floorData));
+
+    // Show success toast
+    showToast('Floor data reset successfully!', 'success');
+});
+
+
+// Function to populate floor stacks from localStorage on page load
+function populateFloorStacksFromLocalStorage() {
+    // Retrieve floorData from localStorage
+    const floorData = JSON.parse(localStorage.getItem('floorData')) || [];
+    
+    // Check if floorData is an array and iterate over it
+    if (Array.isArray(floorData)) {
+        floorData.forEach(floor => {
+            // Find the corresponding floor stack in the DOM
+            const floorStack = document.getElementById(`floor-${floor.name.replace(/\s+/g, '-')}`);
+            if (floorStack) {
+                // Update remaining sqm
+                const remainingElement = floorStack.querySelector('span[id^="remaining-sqm"]');
+                remainingElement.innerText = floor.sqm;
+
+                // Add spaces to the floor stack
+                floor.spaces.forEach(space => {
+                    const droppedSpace = document.createElement('div');
+                    droppedSpace.className = 'bg-green-500 text-white p-4 rounded-lg mb-2';
+                    droppedSpace.innerText = space;
+
+                    // Add click listener to remove space and update remaining area
+                    droppedSpace.addEventListener('click', () => {
+                        droppedSpace.remove();
+                        const spaceSqm = parseInt(space.match(/\d+/)); // Extract sqm from the string
+                        updateRemainingArea(floorStack, spaceSqm, true);
+                        showToast('Space removed successfully!', 'success');
+                    });
+
+                    floorStack.appendChild(droppedSpace);
+                });
+            }
+        });
+    } else {
+        console.warn('No valid floorData found in localStorage.');
+    }
+}
+
+    // Create a floor stack
+    function createFloorStack(floor) {
+        const floorStack = document.createElement('div');
+        floorStack.className = 'floor-stack drop-zone';
+        floorStack.id = `floor-${floor.name.replace(/\s+/g, '-')}`;
+        floorStack.innerHTML = `
+            <h4 class="text-xl text-gray-800 mb-4">${floor.name}</h4>
+            <div class="text-sm text-gray-600 mb-4">Total: <span id="total-sqm">${floor.totalSqm}</span> sqm</div>
+            <div class="text-sm text-gray-600">Remaining: <span id="remaining-sqm-${floor.name.replace(/\s+/g, '-')}">${floor.sqm}</span> sqm</div>
+        `;
+
+        floorStack.addEventListener('dragover', handleDragOver);
+        floorStack.addEventListener('drop', handleDrop);
+        floorStacksContainer.appendChild(floorStack);
+    }
+
+    // Drag and drop handlers
+    function handleDragStart(event) {
+        event.dataTransfer.setData('text/plain', event.target.id);
+        event.target.classList.add('dragging');
+    }
+
+    function handleDragEnd(event) {
+        event.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(event) {
+        event.preventDefault();
+        event.target.closest('.drop-zone')?.classList.add('hover');
+    }
+
+    function handleDrop(event) {
+        event.preventDefault();
+        const draggedId = event.dataTransfer.getData('text/plain');
+        const draggedElement = document.getElementById(draggedId);
+        const floorStack = event.target.closest('.drop-zone');
+        const remainingElement = floorStack.querySelector('span[id^="remaining-sqm"]');
+        
+        // Ensure remainingSqm is parsed as an integer
+        let remainingSqm = parseInt(remainingElement.innerText, 10);
+        if (isNaN(remainingSqm)) {
+            remainingSqm = 0;
+        }
+
+        const spaceName = draggedId.replace('drag-', '');
+        const space = selectedSpaces.find(s => s.name === spaceName);
+
+        if (space.sqm <= remainingSqm) {
+            remainingSqm -= space.sqm;
+            remainingElement.innerText = remainingSqm;
+
+            const droppedSpace = document.createElement('div');
+            droppedSpace.className = 'bg-green-500 text-white p-4 rounded-lg mb-2';
+            droppedSpace.innerText = `${space.name.replace(/-/g, ' ')} - ${space.sqm} sqm`;
+
+            droppedSpace.addEventListener('click', () => {
+                droppedSpace.remove();
+                updateRemainingArea(floorStack, space.sqm, true);
+                showToast('Space removed successfully!', 'success');
+            });
+
+            floorStack.appendChild(droppedSpace);
+            showToast('Space added successfully!', 'success');
+        } else {
+            showToast('Not enough space on this floor!', 'error');
+        }
+
+        // Reset hover states
+        document.querySelectorAll('.drop-zone.hover').forEach(zone => zone.classList.remove('hover'));
+    }
+
+    function updateRemainingArea(floorStack, spaceSqm, isRemove = false) {
+        const remainingElement = floorStack.querySelector('span[id^="remaining-sqm"]');
+        let remainingSqm = parseInt(remainingElement.innerText, 10);
+        if (isNaN(remainingSqm)) {
+            remainingSqm = 0;
+        }
+
+        if (isRemove) {
+            remainingSqm = parseInt(remainingSqm,10)+parseInt(spaceSqm,10);
+        } else {
+            remainingSqm -= spaceSqm;
+        }
+
+        remainingSqm = Math.max(0, remainingSqm);
+        remainingElement.innerText = remainingSqm;
+    }
+
+   function showToast(message, type) {
+        const toastContainer = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.classList.add('toast', type, 'text-white', 'rounded-lg');
+        toast.innerText = message;
+
+        // Append the toast to the container
+        toastContainer.appendChild(toast);
+
+        // Remove toast after animation (6 seconds for both fadeIn and fadeOut)
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // Save data to localStorage
+    function saveSelectedSpaces() {
+        localStorage.setItem('selectedSpaces', JSON.stringify(selectedSpaces));
+    }
+
+    function saveFloorData() {
+        const floorData = [];
+        document.querySelectorAll('.floor-stack').forEach(floorStack => {
+            const floorName = floorStack.querySelector('h4').innerText;
+            const remainingElement = floorStack.querySelector('span[id^="remaining-sqm"]');
+            const remainingSqm = parseInt(remainingElement.innerText);
+
+            const TotalElement = floorStack.querySelector('span[id="total-sqm"]');
+            const totalSqm = parseInt(TotalElement.innerText);
+
+            const spacesOnFloor = [];
+            floorStack.querySelectorAll('.bg-green-500').forEach(space => {
+                spacesOnFloor.push(space.innerText);
+            });
+            floorData.push({
+                name: floorName,
+                sqm: remainingSqm,
+		totalSqm:totalSqm,
+		spaces: spacesOnFloor,
+		seatsAvailable: 0, 
+		seatsNeeded: 0 
+            });
+        });
+        localStorage.setItem('floorData', JSON.stringify(floorData));
+    }
+
+
+// Save data to localStorage and navigate to fifth.html when Next button is clicked
+document.getElementById('next-button').addEventListener('click', function () {
+    // Save selected spaces
+    saveSelectedSpaces();
+    // Save floor data
+    saveFloorData();
+
+    // Navigate to fifth.html
+    window.location.href = 'fifth.html';
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    populateFloorStacksFromLocalStorage();
+});
+
+
+</script>
+</body>
+</html>

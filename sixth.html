@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor Plan - Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .drag-space {
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
+            width: 100%;
+            text-align: center;
+        }
+
+        .drag-space:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+
+        .drag-space.dragging {
+            opacity: 0.5;
+        }
+
+        .floor-stack {
+            border: 2px solid #e5e7eb;
+            background-color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 250px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .floor-stack:hover {
+            background-color: #e2e8f0;
+        }
+
+        .drop-zone.hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .left-panel {
+            overflow-y: auto;
+            height: 100vh;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .right-panel {
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            background-color: #f7fafc;
+        }
+
+        .drop-zone {
+            cursor: pointer;
+        }
+
+.drop-zone {
+    border: 2px dashed #cbd5e1;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 10px 0;
+    background-color: #f3f4f6;
+    min-height: 50px;
+    text-align: center;
+}
+
+        .drop-zone.hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- Left Panel (Selected Spaces) -->
+        <div class="left-panel w-full md:w-1/2 p-8 md:p-16 bg-white shadow-lg rounded-lg">
+            <h1 class="text-3xl font-extrabold text-gray-800 uppercase tracking-widest mb-6">HAWORTH</h1>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Floor Plan Strategy</h3>
+            <p class="text-base text-gray-600 mb-6 leading-relaxed">Drag and drop spaces onto the floor stacks and calculate the available area.</p>
+
+            <!-- Selected Spaces -->
+            <div id="departments-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <!-- Dynamic spaces will be added here -->
+            </div>
+
+            <!-- Reset Button -->
+            <button id="reset-button" class="mt-6 px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
+                Reset
+            </button>
+        </div>
+
+        <!-- Right Panel (Floor Levels) -->
+        <div class="right-panel w-full md:w-1/2 bg-gray-900 p-8 md:p-16 scroll-smooth">
+            <h3 class="text-2xl font-semibold text-white mb-6">Floor Levels</h3>
+            <div id="floor-details-container">
+                <!-- Dynamic floor stacks will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data (you can replace it with real data or fetch from localStorage)
+        const departmentsData = JSON.parse(localStorage.getItem('departmentsData')) || [
+            { name: "HR", headCount: "45", seatCount: 45 },
+            { name: "IT", headCount: "45", seatCount: 56 },
+            { name: "Finance", headCount: "56", seatCount: 65 },
+            { name: "Marketing", headCount: "30", seatCount: 40 }
+        ];
+
+        const floorData = JSON.parse(localStorage.getItem('floorData')) || [
+            { name: "Floor 1", sqm: 300, totalSqm: 300, spaces: ["HR", "IT"], seatsAvailable: 100, seatsNeeded: 0 },
+            { name: "Floor 2", sqm: 400, totalSqm: 400, spaces: ["Finance", "Marketing"], seatsAvailable: 150, seatsNeeded: 0 }
+        ];
+
+        const targetDensity = localStorage.getItem('targetDensity') || 10;
+
+        // Function to generate floor stacks
+        function generateFloorStacks() {
+            const container = document.getElementById('floor-details-container');
+            container.innerHTML = ''; // Clear any previous floor details
+
+            floorData.forEach(floor => {
+                const seatsAvailable = Math.floor(floor.sqm / targetDensity);
+		const seatsNeeded =0;	
+
+                const floorStackDiv = document.createElement('div');
+                floorStackDiv.classList.add('floor-stack', 'p-6', 'bg-white', 'shadow-lg', 'rounded-lg', 'mb-4');
+                floorStackDiv.id = `floor-${floor.name}`;
+
+                const header = document.createElement('h4');
+                header.classList.add('text-xl', 'text-white', 'bg-gray-800', 'text-center', 'py-2', 'rounded-t-lg', 'mb-6');
+                header.textContent = floor.name;
+
+                const sqmSection = document.createElement('div');
+                sqmSection.classList.add('flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'mb-4');
+                sqmSection.innerHTML = `
+                    <div class="flex items-center mb-2 md:mb-0">
+                        <span class="text-sm text-gray-600">Total Sqm: ${floor.totalSqm}</span>
+                    </div>
+                    <div class="flex items-center mb-2 md:mba-0">
+                        <span class="text-sm text-gray-600">Remaining Sqm: ${floor.sqm}</span>
+                    </div>
+                `;
+
+                const seatsSection = document.createElement('div');
+                seatsSection.classList.add('flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', 'mb-6');
+                seatsSection.innerHTML = `
+                    <div class="flex items-center mb-2 md:mb-0">
+                        <span class="text-sm text-gray-600">Seats Available: ${floor.seatsAvailable}</span>
+                    </div>
+                    <div class="flex items-center mb-2 md:mb-0">
+                        <span class="text-sm text-gray-600 " id="seats-needed-${floor.name}">Seats Needed: ${floor.seatsNeeded}</span>
+                    </div>
+                `;
+
+                const libraryButtonsContainer = document.createElement('div');
+                libraryButtonsContainer.classList.add('mb-4', 'flex', 'flex-wrap', 'justify-start');
+                generateFloorButtons(libraryButtonsContainer, floor.spaces);
+
+                const dragArea = document.createElement('div');
+                dragArea.classList.add('bg-gray-100', 'p-6', 'rounded-lg', 'border-dashed', 'border-2', 'border-gray-400', 'mb-6', 'drop-zone');
+                dragArea.id = `drag-area-${floor.name}`;
+                dragArea.innerHTML = `<p class="text-sm text-gray-600 text-center">Drag spaces here</p>`;
+
+                floorStackDiv.appendChild(header);
+                floorStackDiv.appendChild(sqmSection);
+                floorStackDiv.appendChild(seatsSection);
+                floorStackDiv.appendChild(libraryButtonsContainer);
+                floorStackDiv.appendChild(dragArea);
+
+                container.appendChild(floorStackDiv);
+            });
+        }
+
+        // Function to generate Floor-specific buttons (red and non-draggable)
+        function generateFloorButtons(container, spaces) {
+            container.innerHTML = '';
+            spaces.forEach(space => {
+                const button = document.createElement('button');
+                button.classList.add('text-white', 'py-1', 'px-4', 'rounded-lg', 'mr-4', 'my-2', 'bg-red-500');
+                button.disabled = true; // Disable buttons from floorData
+                button.textContent = space;
+                button.classList.add('cursor-not-allowed');
+                container.appendChild(button);
+            });
+        }
+
+        // Function to generate Department buttons (green and draggable)
+        function generateDepartmentButtons(container, departments) {
+            container.innerHTML = '';
+            departments.forEach(department => {
+                const button = document.createElement('button');
+                button.classList.add('text-white', 'py-1', 'px-4', 'rounded-lg', 'mr-4', 'my-2', 'bg-green-500');
+                button.draggable = true; // Enable dragging
+                button.id = `department-${department.name}`;
+                button.textContent = `${department.name} (${department.seatCount} seats)`;
+                button.addEventListener('dragstart', handleDragStart);
+                button.addEventListener('dragend', handleDragEnd);
+                container.appendChild(button);
+            });
+        }
+
+        // Handle drag start
+        function handleDragStart(event) {
+            event.dataTransfer.setData('text/plain', event.target.id);
+            event.target.classList.add('dragging');
+        }
+
+        // Handle drag end
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+        }
+
+        // Handle drag over
+        function handleDragOver(event) {
+            event.preventDefault();
+            const dropZone = event.target.closest('.drop-zone');
+            if (dropZone) {
+                dropZone.classList.add('hover');
+            }
+        }
+
+        // Handle drag leave
+        function handleDragLeave(event) {
+            const dropZone = event.target.closest('.drop-zone');
+            if (dropZone) {
+                dropZone.classList.remove('hover');
+            }
+        }
+
+function handleDrop(event) {
+    event.preventDefault(); // Prevent default behavior (e.g., opening links)
+
+    const dropZone = event.target.closest('.drop-zone');
+    if (dropZone) {
+        dropZone.classList.remove('hover'); // Remove hover effect after drop
+
+        // Get the dragged department ID and find the corresponding department data
+        const draggedElementId = event.dataTransfer.getData('text/plain');
+        const draggedElement = document.getElementById(draggedElementId);
+        const departmentName = draggedElement.textContent.split('(')[0].trim();
+        const department = departmentsData.find(dept => dept.name === departmentName);
+        
+        // Find the corresponding floor by its name (from drop zone ID)
+        const floorName = dropZone.id.split('-')[2]+'-'+dropZone.id.split('-')[3]; // Extract floor name from the ID
+console.log(floorName);
+        const floor = floorData.find(floor => floor.name === floorName);
+console.log(floor);
+
+        
+        if (!floor || !department) return; // Safety check
+
+        // Ensure that seatCount is treated as a number
+        const seatCount = Number(department.seatCount); // Convert to number
+        if (isNaN(seatCount)) return; // If seatCount is not a valid number, exit
+
+        // Update only the "Seats Needed" on the floor by adding seatCount
+        floor.seatsNeeded += seatCount;
+    console.log(floor.seatsNeeded);
+
+
+        // Find the seats section and update the seats needed
+        const seatsSection = dropZone.previousElementSibling; // Find the seats section
+ const seatsSection1 = seatsSection.previousElementSibling;
+console.log(seatsSection.previousElementSibling);
+console.log(seatsSection1);
+        const neededSeatsSpan = seatsSection1 ? seatsSection1.querySelector(`#seats-needed-${floorName}`) : null;
+console.log(neededSeatsSpan);
+
+        
+        if (neededSeatsSpan) {
+            neededSeatsSpan.textContent = `Seats Needed: ${floor.seatsNeeded}`;
+	console.log(floor.seatsNeeded);
+
+        }
+
+        // Create a new element to display the department in the drop zone (floor stack)
+        const departmentElement = document.createElement('div');
+        departmentElement.classList.add('text-gray-700', 'bg-green-300', 'p-2', 'mb-2', 'rounded');
+        departmentElement.textContent = department.name;
+
+        // Append the department to the drop zone (floor stack)
+        dropZone.appendChild(departmentElement);
+
+        // Store the updated floor data in localStorage
+        localStorage.setItem('floorData', JSON.stringify(floorData));
+
+        // Add the remove functionality to the department element
+        departmentElement.addEventListener('click', function() {
+            // Remove the department from the floor
+            dropZone.removeChild(departmentElement);
+
+            // Update seats needed on the floor by subtracting seatCount
+            floor.seatsNeeded -= seatCount;
+
+console.log(floor.seatsNeeded);
+
+            // Update the floor UI for seats
+            if (seatsSection1) {
+                const updatedSeatsSpan = seatsSection1.querySelector(`#seats-needed-${floorName}`);
+                if (updatedSeatsSpan) {
+                    updatedSeatsSpan.textContent = `Seats Needed: ${floor.seatsNeeded}`;
+                }
+            }
+
+            // Store the updated floor data in localStorage
+            localStorage.setItem('floorData', JSON.stringify(floorData));
+
+            // Re-enable the dragged department button
+            draggedElement.disabled = false;
+            draggedElement.classList.remove('cursor-not-allowed');
+
+        });
+    }
+}
+
+
+
+
+
+// Handle Reset Button
+document.getElementById('reset-button').addEventListener('click', function() {
+    
+    const floorData = JSON.parse(localStorage.getItem('floorData')) || [];
+    floorData.forEach(floor => {
+         floor.seatsNeeded = 0; // Reset remaining sqm to total sqm
+    });
+
+console.log(JSON.stringify(floorData));
+    // Save the updated floorData back to localStorage
+    localStorage.setItem('floorData', JSON.stringify(floorData));
+
+
+    window.location.reload(); // Refresh the page to reset the UI
+});
+
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            generateFloorStacks();
+            generateDepartmentButtons(document.getElementById('departments-container'), departmentsData);
+
+            document.querySelectorAll('.drop-zone').forEach(dropZone => {
+                dropZone.addEventListener('dragover', handleDragOver);
+                dropZone.addEventListener('dragleave', handleDragLeave);
+                dropZone.addEventListener('drop', handleDrop);
+            });
+
+          });
+    </script>
+</body>
+</html>
