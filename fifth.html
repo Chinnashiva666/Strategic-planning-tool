@@ -418,7 +418,7 @@ function showToast(message, type) {
     const toast = document.createElement('div');
     toast.classList.add('toast', type === 'success' ? 'bg-green-600' : 'bg-red-600');
     toast.textContent = message;
-    document.body.appendChild(toast);
+    document.getElementById('toast-container').appendChild(toast);
     
     setTimeout(() => {
         toast.remove();
